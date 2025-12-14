@@ -1,18 +1,33 @@
-# -------------------------------
-# Provider
-# -------------------------------
+################################
+# Terraform & Providers
+################################
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+    tls = {
+      source = "hashicorp/tls"
+    }
+    local = {
+      source = "hashicorp/local"
+    }
+  }
+}
+
 provider "aws" {
   region = var.aws_region
 }
 
-# -------------------------------
-# Data source: Availability zones
-# -------------------------------
+################################
+# Data Source
+################################
 data "aws_availability_zones" "available" {}
 
-# -------------------------------
+################################
 # VPC
-# -------------------------------
+################################
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_support   = true
@@ -23,9 +38,9 @@ resource "aws_vpc" "main" {
   }
 }
 
-# -------------------------------
+################################
 # Public Subnets
-# -------------------------------
+################################
 resource "aws_subnet" "public" {
   count                   = 2
   vpc_id                  = aws_vpc.main.id
@@ -38,9 +53,9 @@ resource "aws_subnet" "public" {
   }
 }
 
-# -------------------------------
+################################
 # Private Subnets
-# -------------------------------
+################################
 resource "aws_subnet" "private" {
   count             = 2
   vpc_id            = aws_vpc.main.id
@@ -52,9 +67,9 @@ resource "aws_subnet" "private" {
   }
 }
 
-# -------------------------------
+################################
 # Internet Gateway
-# -------------------------------
+################################
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.main.id
 
@@ -63,9 +78,9 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
-# -------------------------------
+################################
 # Public Route Table
-# -------------------------------
+################################
 resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.main.id
 
@@ -79,21 +94,21 @@ resource "aws_route_table" "public_rt" {
   }
 }
 
-# -------------------------------
-# Associate Route Table with Public Subnets
-# -------------------------------
+################################
+# Route Table Association
+################################
 resource "aws_route_table_association" "public_assoc" {
   count          = 2
   subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public_rt.id
 }
 
-# -------------------------------
-# Security Group for EC2
-# -------------------------------
+################################
+# Security Group
+################################
 resource "aws_security_group" "strapi_sg" {
   name        = "strapi-sg"
-  description = "Allow SSH + Strapi"
+  description = "Allow SSH & Strapi"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -120,9 +135,9 @@ resource "aws_security_group" "strapi_sg" {
   }
 }
 
-# -------------------------------
-# Key Pair for EC2
-# -------------------------------
+################################
+# Key Pair
+################################
 resource "tls_private_key" "strapi_key" {
   algorithm = "RSA"
   rsa_bits  = 4096
@@ -130,21 +145,20 @@ resource "tls_private_key" "strapi_key" {
 
 resource "local_file" "private_key" {
   content         = tls_private_key.strapi_key.private_key_pem
-  filename = "/home/apurv/strapi-key.pem"
+  filename        = "C:/Users/apurv/strapi-key.pem"
   file_permission = "0400"
 }
-
 
 resource "aws_key_pair" "strapi_key" {
   key_name   = "strapi-key"
   public_key = tls_private_key.strapi_key.public_key_openssh
 }
 
-# -------------------------------
-# EC2 INSTANCE
-# -------------------------------
+################################
+# EC2 Instance (Strapi)
+################################
 resource "aws_instance" "strapi_ec2" {
-  ami                         = "ami-02b8269d5e85954ef"  # Ubuntu 22.04 Mumbai
+  ami                         = "ami-0f5ee92e2d63afc18" # Ubuntu 22.04 (ap-south-1)
   instance_type               = "t3.micro"
   subnet_id                   = aws_subnet.public[0].id
   associate_public_ip_address = true
@@ -158,17 +172,10 @@ resource "aws_instance" "strapi_ec2" {
     systemctl start docker
     systemctl enable docker
 
-    # Create folder for your project
     mkdir -p /home/ubuntu/strapi-app
     cd /home/ubuntu/strapi-app
 
-    # Optional: clone your repo (if using git)
-    # git clone <YOUR_REPO_URL> .
-
-    # Build Docker image from your Dockerfile
     docker build -t strapi-app .
-
-    # Run the container
     docker run -d -p 1337:1337 --name strapi-app strapi-app
   EOF
 
@@ -177,9 +184,9 @@ resource "aws_instance" "strapi_ec2" {
   }
 }
 
-# -------------------------------
-# Output Public IP
-# -------------------------------
+################################
+# Output
+################################
 output "strapi_public_ip" {
   value = aws_instance.strapi_ec2.public_ip
 }
