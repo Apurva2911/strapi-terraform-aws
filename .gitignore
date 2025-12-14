@@ -1,3 +1,4 @@
+@"
 # Strapi
 Strapi-app/.env
 Strapi-app/.tmp/
@@ -14,9 +15,10 @@ docker-compose.override.yml
 terraform/*.tfstate
 terraform/*.tfstate.backup
 terraform/.terraform/
-terraform/terraform.tfvars   # if you have secrets here
+terraform/terraform.tfvars
 
 # OS / Editor
 .DS_Store
 Thumbs.db
 .vscode/
+"@ | Set-Content .gitignore
