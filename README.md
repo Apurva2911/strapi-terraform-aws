@@ -152,17 +152,6 @@ Access Admin Panel:
 http://<EC2-PUBLIC-IP>:1337/admin
 ```
 
----
-
-## 📸 Screenshots
-
-Recommended screenshots to include:
-
-1. **Terminal output** showing:
-
-   * `Database Connected`
-   * `Strapi started successfully`
-
 2. **Strapi Admin Dashboard** after successful login
 
 > Note: Database credentials are not exposed in the admin UI for security reasons.
@@ -229,5 +218,6 @@ After apply, Terraform outputs a public EC2 instance accessible via SSH.
 
 **Apurva**
 GitHub: (https://github.com/Apurva2911)
+
 
 
