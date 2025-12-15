@@ -13,6 +13,7 @@ A real-world, production-style deployment of **Strapi v4** on an **AWS EC2 (Ubun
 * PostgreSQL database installed on EC2
 * Secure environment variable configuration
 * Production-style AWS networking & security
+* Optional Docker container deployment
 
 ---
 
@@ -27,6 +28,7 @@ A real-world, production-style deployment of **Strapi v4** on an **AWS EC2 (Ubun
 * **Database:** PostgreSQL (on EC2)
 * **OS:** Ubuntu 22.04
 * **Version Control:** Git & GitHub
+* **Containerization:** Docker
 
 ---
 
@@ -61,10 +63,10 @@ Create a `.env` file using the example below:
 
 ```env
 DATABASE_CLIENT=postgres
-DATABASE_HOST=localhost
+DATABASE_HOST=127.0.0.1
 DATABASE_PORT=5432
 DATABASE_NAME=strapidb
-DATABASE_USERNAME=postgres
+DATABASE_USERNAME=strapi_user
 DATABASE_PASSWORD=your_password
 
 ADMIN_JWT_SECRET=your_admin_jwt_secret
@@ -94,9 +96,9 @@ sudo -i -u postgres
 
 ```sql
 psql
-CREATE DATABASE strapidb;
-CREATE USER postgres WITH PASSWORD 'your_password';
-GRANT ALL PRIVILEGES ON DATABASE strapidb TO postgres;
+CREATE USER strapi_user WITH PASSWORD 'your_password';
+CREATE DATABASE strapidb OWNER strapi_user;
+GRANT ALL PRIVILEGES ON DATABASE strapidb TO strapi_user;
 \q
 exit
 ```
@@ -104,7 +106,7 @@ exit
 ### 4️⃣ Verify Connection
 
 ```bash
-psql -U postgres -d strapidb
+psql -U strapi_user -d strapidb -h 127.0.0.1
 ```
 
 This ensures that Strapi can connect using the `.env` credentials.
@@ -118,7 +120,7 @@ Example startup output from Strapi:
 
 ---
 
-## ▶️ Application Deployment on EC2
+## ▶️ Application Deployment on EC2 (Node.js)
 
 After Terraform provisions the EC2 instance:
 
@@ -152,10 +154,38 @@ Access Admin Panel:
 http://<EC2-PUBLIC-IP>:1337/admin
 ```
 
-2. **Strapi Admin Dashboard** after successful login
+---
 
-> Note: Database credentials are not exposed in the admin UI for security reasons.
+## ▶️ Optional Deployment Using Docker
 
+You can also deploy Strapi in a **Docker container** for better isolation and reproducibility.
+
+### 1️⃣ Build Docker Image
+
+```bash
+cd Strapi-app
+docker build -t strapi-app .
+```
+
+### 2️⃣ Run Docker Container
+
+```bash
+docker run -d -p 1337:1337 --name strapi -e DATABASE_CLIENT=postgres -e DATABASE_HOST=host.docker.internal -e DATABASE_PORT=5432 -e DATABASE_NAME=strapidb -e DATABASE_USERNAME=strapi_user -e DATABASE_PASSWORD=your_password strapi-app
+```
+
+> On EC2/Linux, replace `host.docker.internal` with `127.0.0.1`.
+
+### 3️⃣ Access Admin Panel
+
+```
+http://<EC2-PUBLIC-IP>:1337/admin
+```
+
+### Notes
+
+* Containerization allows **clean separation** from host OS.
+* Fully **reproducible environment** across machines.
+* Ideal for **production-ready deployments**.
 ---
 
 ## 🔐 Security Best Practices
@@ -208,6 +238,7 @@ After apply, Terraform outputs a public EC2 instance accessible via SSH.
 * Provisioning EC2 and security resources via IaC
 * Installing and configuring PostgreSQL on EC2
 * Deploying Strapi on a Linux server
+* Deploying Strapi via Docker container (optional)
 * Managing secrets using environment variables
 * Understanding PostgreSQL peer authentication on Ubuntu
 * Clean Git workflows for infrastructure + application code
@@ -217,7 +248,4 @@ After apply, Terraform outputs a public EC2 instance accessible via SSH.
 ## 👤 Author
 
 **Apurva**
-GitHub: (https://github.com/Apurva2911)
-
-
-
+GitHub: [https://github.com/Apurva2911]
